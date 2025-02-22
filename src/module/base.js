@@ -1,14 +1,15 @@
 import gui from "../gui/gui";
 
 export default class Module {
-	constructor(name, type) {
-		this.name = name
-		this.type = type
-		this.enabled = false
-		
+	constructor(name, type, bind) {
+		this.name = name;
+		this.type = type;
+		this.enabled = false;
+		this.bind = bind;
+
 		if (type === 'Button') {
 			this.ui = gui.addButton(name, this.onClicked.bind(this));
-		} else {
+		} else if (type === 'Toggle') {
 			this.ui = gui.addToggle(name, this.toggle.bind(this));
 		}
 	}
