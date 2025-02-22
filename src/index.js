@@ -3,6 +3,7 @@ import manager from './module/manager';
 
 class Main {
 	constructor() {
+		window.bca = {};
 		this.init();
 	}
 
@@ -10,7 +11,6 @@ class Main {
 		gui.init();
 		manager.init();
 
-		window.bca = {};
 		window.bca.modules = manager.modules;
 		window.bca.gui = gui;
 	}
