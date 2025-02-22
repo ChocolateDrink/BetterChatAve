@@ -3,7 +3,7 @@ import Module from '../base';
 
 export default class CountrySearch extends Module {
 	constructor() {
-		super('Search By Country', 'Button')
+		super('Search By Country', 'Button');
 	}
 
 	onClicked() {
