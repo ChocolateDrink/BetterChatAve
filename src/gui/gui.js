@@ -77,18 +77,19 @@ export default {
 		let offset = { X:0, Y:0 };
 
 		const start = (e) => {
-			initial.X = e.clientX - offset.X;
-			initial.Y = e.clientY - offset.Y;
-
 			if (e.target !== element && !e.target.closest('.gui-title-bar'))
 				return;
+
+			const transform = window.getComputedStyle(this.state.main).transform;
+			const matrix = transform === 'none' ? new DOMMatrix() : new DOMMatrix(transform);
+
+			initial.X = e.clientX - matrix.m41;
+			initial.Y = e.clientY - matrix.m42;
 
 			dragging = true;
 		}
 
 		const end = () => {
-			initial.X = current.X;
-			initial.Y = current.Y;
 			dragging = false;
 		}
 
