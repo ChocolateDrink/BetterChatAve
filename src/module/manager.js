@@ -1,7 +1,6 @@
 import filter from '../utils/filter';
 
 import CountrySearch from './modules/CountrySearch';
-import ChatFilterBypass from './modules/ChatFilterBypass';
 import SpamFilter from './modules/SpamFilter';
 import BlockLongText from './modules/BlockLongText';
 import BlockSpammers from './modules/BlockSpammers';
@@ -25,7 +24,6 @@ export default {
 		window.bca.filter = filter;
 
 		this.add(new CountrySearch());
-		this.add(new ChatFilterBypass());
 		this.add(new SpamFilter());
 		this.add(new BlockLongText());
 		this.add(new BlockSpammers());
@@ -36,41 +34,8 @@ export default {
 		this.add(new DMSwap());
 		this.add(new QuickBlock);
 
-		this.initChatHooks();
 		this.initSpamFilter();
 		this.initKeybinds();
-	},
-
-	initChatHooks() {
-		const oldOpen = XMLHttpRequest.prototype.open;
-		const oldSend = XMLHttpRequest.prototype.send;
-
-		const manager = this;
-
-		XMLHttpRequest.prototype.open = function(_, url) {
-			this.hookable = url.includes('chat_process.php') || url.includes('private_process.php');
-
-			return oldOpen.apply(this, arguments);
-		}
-
-		XMLHttpRequest.prototype.send = function(body) {
-			if (!this.hookable || !body || !manager.modules['Chat Filter Bypass'].enabled) {
-				return oldSend.apply(this, [body]);
-			}
-
-			const bodyParams = new URLSearchParams(body);
-			let content = bodyParams.get('content');
-			if (!content) return oldSend.apply(this, [body]);
-
-			content = content.split(' ')
-				.map(word => word.length >= 3 ? word.split('').join('‎') : word)
-				.join(' ');
-
-			bodyParams.set('content', content);
-			body = bodyParams.toString();
-
-			return oldSend.apply(this, [body]);
-		}
 	},
 
 	initSpamFilter() {
@@ -81,39 +46,40 @@ export default {
 				if (mutation.type !== 'childList') continue;
 
 				mutation.addedNodes.forEach(node => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'LI') {
-						const msg = node.querySelector('.chat_message');
-						if (!msg) return;
+					if (node.nodeType !== Node.ELEMENT_NODE || node.tagName !== 'LI')
+						return;
 
-						const avs = node.querySelector('.avtrig.avs_menu.chat_avatar');
-						const userId = avs ? avs.getAttribute('data-id') : null;
+					const msg = node.querySelector('.chat_message');
+					if (!msg) return;
 
-						const msgText = msg.textContent.trim().toLowerCase().replace(filter.filRegex, '');
-						const detected = filter.hasBadWord(msgText);
+					const avs = node.querySelector('.avtrig.avs_menu.chat_avatar');
+					const userId = avs ? avs.getAttribute('data-id') : null;
 
-						if (this.modules['Remove Spam Messages'].enabled && detected) {
-							node.remove();
+					const msgText = msg.textContent.trim().toLowerCase().replace(filter.filRegex, '');
+					const detected = filter.hasBadWord(msgText);
 
-							if (this.modules['Log Spam Messages'].enabled)
-								console.log(`removed: "${msgText}" due to: "${detected}"`);
+					if (this.modules['Remove Spam Messages'].enabled && detected) {
+						node.remove();
 
-							if (this.modules['Block Spammers'].enabled && userId)
-								ignoreUser(parseInt(userId));
+						if (this.modules['Log Spam Messages'].enabled)
+							console.log(`removed: "${msgText}" due to: "${detected}"`);
 
-							return;
-						}
+						if (this.modules['Block Spammers'].enabled && userId)
+							ignoreUser(parseInt(userId));
 
-						if (this.modules['Remove Long Messages'].enabled && msgText.length >= 200) {
-							node.remove();
+						return;
+					}
 
-							if (this.modules['Log Spam Messages'].enabled)
-								console.log(`removed: "${msgText.slice(0, 50)}..." due to having more than 200 characters (${msgText.length})`);
+					if (this.modules['Remove Long Messages'].enabled && msgText.length >= 200) {
+						node.remove();
 
-							if (this.modules['Block Spammers'].enabled && userId)
-								ignoreUser(parseInt(userId));
+						if (this.modules['Log Spam Messages'].enabled)
+							console.log(`removed: "${msgText.slice(0, 50)}..." due to having more than 200 characters (${msgText.length})`);
 
-							return;
-						}
+						if (this.modules['Block Spammers'].enabled && userId)
+							ignoreUser(parseInt(userId));
+
+						return;
 					}
 				});
 			}
