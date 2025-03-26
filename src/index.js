@@ -4,7 +4,6 @@ import manager from './module/manager';
 class Main {
 	constructor() {
 		window.bca = {};
-		this.init();
 	}
 
 	init() {
@@ -16,4 +15,15 @@ class Main {
 	}
 };
 
-export default new Main()
+const main = new Main();
+
+const onLoaded = () => {
+	main.init();
+	document.removeEventListener('DOMContentLoaded', onLoaded);
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', onLoaded);
+} else {
+	onLoaded();
+}
